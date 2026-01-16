@@ -279,6 +279,40 @@ describe("Elysia CSRF Plugin", () => {
     expect(headerRes.status).toBe(200);
   });
 
+  test.each([
+    ["X-CSRF-Token"],
+    ["X-XSRF-Token"],
+    ["CSRF-Token"],
+    ["XSRF-Token"],
+  ])("should support token from default header: %s", async (headerName) => {
+    const app = new Elysia()
+      .use(
+        csrf({
+          cookie: true,
+        })
+      )
+      .get("/token", ({ csrfToken }) => ({ token: csrfToken() }))
+      .post("/submit", ({ body }) => ({ success: true }));
+
+    const tokenRes = await app.handle(new Request("http://localhost/token"));
+    const cookies = tokenRes.headers.get("set-cookie");
+    const { token } = (await tokenRes.json()) as { token: string };
+
+    const res = await app.handle(
+      new Request("http://localhost/submit", {
+        method: "POST",
+        headers: {
+          Cookie: cookies || "",
+          [headerName]: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ data: "test" }),
+      })
+    );
+
+    expect(res.status).toBe(200);
+  });
+
   test("should work with HTML forms", async () => {
     const app = new Elysia()
       .use(csrf({ cookie: true }))

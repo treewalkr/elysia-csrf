@@ -147,10 +147,10 @@ function defaultValue(context: any): string | undefined {
   return (
     body?._csrf ||
     query?._csrf ||
-    headers["csrf-token"] ||
-    headers["xsrf-token"] ||
-    headers["x-csrf-token"] ||
-    headers["x-xsrf-token"]
+    headers.get("csrf-token") ||
+    headers.get("xsrf-token") ||
+    headers.get("x-csrf-token") ||
+    headers.get("x-xsrf-token")
   );
 }
 
